@@ -45,6 +45,7 @@ GEM
       mime-types (~> 1.16)
       treetop (~> 1.4.8)
     mime-types (1.17.2)
+    pg (0.12.2)
     polyglot (0.3.3)
     rack (1.2.5)
     rack-mount (0.6.14)
@@ -78,5 +79,6 @@ PLATFORMS
 
 DEPENDENCIES
   compass (>= 0.11.7)
+  pg
   rails (= 3.0.6)
   sqlite3
