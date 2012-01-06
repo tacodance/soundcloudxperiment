@@ -3,6 +3,11 @@
 <head>
   <title>Soundcloudxperiment</title>
   <%= stylesheet_link_tag :all %>
+  <%= stylesheet_link_tag 'screen', :media => 'screen, projection' %>
+  <%= stylesheet_link_tag 'print', :media => 'print' %>
+  <!-- [if IE]  -->
+  <%= stylesheet_link_tag 'ie', :media => 'screen, projection' %>
+  <!-- [endif]-->
   <%= yield :css %>
   <%= javascript_include_tag 'underscore-min' %>
   <%= javascript_include_tag 'backbone-min' %>
