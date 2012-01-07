@@ -6,4 +6,11 @@ class ApplicationController < ActionController::Base
       format.html
     end
   end
+  
+  def playlists
+    respond_to do |format|
+      format.html
+    end
+  end
+  
 end

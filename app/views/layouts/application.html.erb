@@ -9,13 +9,66 @@
   <%= stylesheet_link_tag 'ie', :media => 'screen, projection' %>
   <!-- [endif]-->
   <%= yield :css %>
+
+  <!-- jQuery Mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css" />
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+  <script type="text/javascript" src="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js"></script>
+  <script>
+      //$(document).bind("mobileinit", function(){
+          $.extend(  $.mobile , {
+              ajaxEnabled: false,
+              linkBindingEnabled: false,
+              hashListeningEnabled: false,
+              pushStateEnabled: false
+          });
+      //});
+  </script>
+  
+  <%
+      c_id = 'cd521b6a922f4f24f8a6214259923770'
+      r_uri = 'http://127.0.0.1/authenticate/callback'
+      #r_uri = 'http://127.0.0.1/'
+      #soundcloudxperiment.herokuapp.com
+  %>
+  
+  <%#= javascript_include_tag 'jquery.min' %>  
   <%= javascript_include_tag 'underscore-min' %>
   <%= javascript_include_tag 'backbone-min' %>
+  <%= javascript_include_tag 'backbone-localstorage' %>  <!-- #FIXME needed -->
+  
+  <%= javascript_include_tag 'handlebars' %>
+  
+  <script src="http://connect.soundcloud.com/sdk.js" type="text/JavaScript"></script>
+  <script type="text/JavaScript">
+      SC.initialize({
+          client_id: "<%= c_id %>",
+          redirect_uri: "<%= r_uri %>"
+      });
+  </script>
+  
+  <%= yield :extra_js %>
+
   <%= csrf_meta_tag %>
 </head>
 <body>
+   <div data-role="page" id="mainPage">
+      <%= yield %>
+   </div>
 
-<%= yield %>
-
+   <!-- DIALOGS -->
+   <!-- track options -->
+   <div data-role="page" id="trackOptionsDialog">
+      <div data-role="header">
+         HEY!
+      </div>
+      <div data-role="content">
+         <ul class="listView" data-role="listview" data-inset="true">
+            <li><a href="#">Herp</a></li>
+            <li><a href="#">Derp</a></li>
+         </ul>
+      </div>
+   </div>
 </body>
 </html>

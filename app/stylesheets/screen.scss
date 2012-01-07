@@ -1,6 +1,83 @@
 /* Welcome to Compass.
- * In this file you should write your main styles. (or centralize your imports)
- * Import this file using the following HTML or equivalent:
- * <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css" /> */
+* In this file you should write your main styles. (or centralize your imports)
+* Import this file using the following HTML or equivalent:
+* <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css" /> */
 
 @import "compass/reset";
+
+.scBackground {
+   background: linear-gradient(bottom, rgb(255,56,1) 17%, rgb(251,130,18) 59%) !important;
+   background: -o-linear-gradient(bottom, rgb(255,56,1) 17%, rgb(251,130,18) 59%);
+   background: -moz-linear-gradient(bottom, rgb(255,56,1) 17%, rgb(251,130,18) 59%);
+   background: -webkit-linear-gradient(bottom, rgb(255,56,1) 17%, rgb(251,130,18) 59%) !important;
+   background: -ms-linear-gradient(bottom, rgb(255,56,1) 17%, rgb(251,130,18) 59%);
+
+   background: -webkit-gradient(
+   linear,
+   left bottom,
+   left top,
+   color-stop(0.17, rgb(255,56,1)),
+   color-stop(0.59, rgb(251,130,18))
+   );
+
+   color: white !important;
+   text-shadow: none !important;
+}
+
+body,.ui-page,#mainView,#searchResults{
+   width: 100%;
+}
+
+a.play-button{
+   width: 80px;
+   >span{
+      padding-left: 10px;
+      padding-right: 10px;
+   }
+}
+
+a.track-details{
+   >span {
+      text-align: left;
+   }
+}
+.ui-icon-play,.ui-icon-pause {
+   background-image: url("/images/player-medium-buttons.png");
+   width: 50px;
+   height: 50px;
+
+   margin-right: 10px;
+   cursor: pointer;
+
+   &.ui-icon-play{
+      background-position: -4px -4px;
+      &:active{
+         background-position: -68px -4px;
+      }
+   }
+   &.ui-icon-pause{
+      background-position: -4px -63px;
+      &:active{
+         background-position: -68px -63px;
+      }
+   }
+}
+
+.track-li {
+   display:table;
+   width: 100%;
+   height: 71px;
+   margin: 0 !important;
+   > a {
+      display: table-cell !important;
+      vertical-align: middle;
+      
+      .trackTitle{
+         margin-top: 6px;
+      }
+      .artistName{
+         font-size: 70%;
+         margin-top: 2px;
+      }
+   }
+}

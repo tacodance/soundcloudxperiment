@@ -1,3 +1,64 @@
-<% content_for :css do %>
-    <!-- CSS here -->
+<%
+    c_id = 'cd521b6a922f4f24f8a6214259923770'
+    r_uri = 'http://127.0.0.1/authenticate/callback'
+    #r_uri = 'http://127.0.0.1/'
+    
+    btn_url="https://soundcloud.com/connect?client_id=#{c_id}&redirect_uri=#{r_uri}&response_type=code_and_token&scope=non-expiring&display=popup'" 
+   
+    #soundcloudxperiment.herokuapp.com
+%>
+<% content_for :extra_js do %>    
+    <%= javascript_include_tag 'index' %>
 <% end %>
+
+<% content_for :css do %>
+    <%= stylesheet_link_tag 'index' %>
+<% end %>
+
+<a id="connectBtn" class="button scBackground" data-role="button">Connect!</a>
+<div id="mainView">
+
+</div>
+<a id="disconnectBtn" class="button scBackground" data-role="button">Disconnect</a>
+
+<script id="index-template" type="text/x-handlebars-template">
+  {{#if isConnected}}
+    <div id="avatarDiv">
+        <img/>
+    </div>
+
+    <br/>
+
+    <div id="menu">
+        <ul class="listView" id="playlists-entries" data-role="listview" data-inset="true">
+            <li><a href="/playlists">Playlists</a></li>
+            <li><a href="#search/">Search</a></li>
+        </ul>
+    </div>
+
+  {{else}}
+    <!-- FIXME -->
+  {{/if}}
+</script>
+
+<script id="search-template" type="text/x-handlebars-template">
+    <input type="search" name="password" id="searchInput" value="" />
+    <br/>
+    <ul id="searchResults">
+    </ul>
+</script>
+
+<script id="track-template" type="text/x-handlebars-template">
+    <a class="play-button" data-role="button">
+        {{#if this.streamable}}
+            <div class="ui-icon-play"></div>
+        {{/if}}
+    </a>
+    <a class="track-details" data-role="button">
+        <div class="trackTitle">{{this.title}}</div>
+        <div class="artistName">{{this.user.username}}</div>
+    </a>
+</script>
+
+
+
