@@ -54,6 +54,8 @@ $(function(){
    var SearchView = Backbone.View.extend({
       el: $("#mainView"),
       template: Handlebars.compile($("#search-template").html()),
+      footerTemplate: Handlebars.compile($("#searchFooter-template").html()),
+      footerDiv: $("#mainFooter"),
       rendered: false,
       
       events: {
@@ -80,19 +82,21 @@ $(function(){
                   //TODO
                },
                success:function(res, status, xhr){
-                  var resTracks = new TrackCollection; //TODO store this in view?
+                  var resTracks = new TrackCollection; //in the closure scope
                   resTracks.add(res);
                   var resTracksView = new SearchResultsView({
                      model: resTracks
                   });
                   resTracksView.render();
+                  
+                  resTracks.bind('change', searchView.refreshFooter, searchView);
                }
             })
          //}
                   
       },
 
-      
+      //FIXME remove this
       wasRendered: function(){
          return this.rendered;
       },
@@ -106,7 +110,14 @@ $(function(){
       },
 
       initialize: function(){
-
+         //this.model.bind('change', this.render, this);
+      },
+      
+      refreshFooter: function(track){
+         var footer = this.footerDiv;
+         footer.html(this.footerTemplate(track.toJSON()));
+         footer.trigger('create');
+         footer.show();
       }
    });
    
@@ -115,9 +126,31 @@ $(function(){
    //2.1-SearchResultsView
    var SearchResultsView = Backbone.View.extend({
       el: null, //must be set at init time
+      trackViews: {}, // {trackid: trackview, ...
       
       initialize: function(){
          this.el = $("#searchResults");
+      },
+      
+      refreshTrackView: function(trackId){
+         var track = this.model.get(trackId);
+         
+      },
+      
+      setSelectedTrack: function(trackId){
+         if(this.model.selectedTrack){
+            this.model.selectedTrack.set({
+               selected: false
+            });
+         }
+         var selectedTrack = this.model.get(trackId);
+         this.model.selectedTrack = selectedTrack;
+         selectedTrack.set({
+            selected: true
+         });
+         
+         
+         // this.render();
       },
       
       render: function() {
@@ -125,17 +158,23 @@ $(function(){
          $el.html(''); //empty results
          
          //add single TrackViews
-         this.model.each(function(element, index, list){
-            var trackLi = $("<li class='track-li' data-role='controlgroup' data-type='horizontal'></li>");
-            $el.append(trackLi);
-            var trackView = new TrackView({
-               model:{
-                  el: trackLi,
-                  track: element
-               }
-            });
-            trackView.render();
-         })
+         (function(scope){
+            //var vScope = scope;
+            scope.model.each(function(element, index, list){
+               var trackLi = $("<li class='track-li'></li>");
+               $el.append(trackLi);
+               var trackView = new TrackView({
+                  model:{
+                     el: trackLi,
+                     track: element,
+                     parentView: scope,
+                     selected: scope.model.selectedTrack == element.id
+                  }
+               });
+               scope.trackViews[element.attributes.id] = trackView;
+               trackView.render();
+            })
+         })(this);
          $el.trigger('create'); //jqueryMobile init
          this.wasRendered = true;
       }
@@ -148,38 +187,41 @@ $(function(){
 
       events: {
          //"click .play-button"  : 'togglePlay',
-         "click .ui-icon-play" : 'togglePlay',
+         "click .ui-icon-play"  : 'togglePlay',
          "click .ui-icon-pause" : 'togglePlay',
-         "click .track-details" : 'showTrackOptions'
+         "click .track-entry"                : 'selectTrack',
+         //"click .track-details" : 'showTrackOptions'
+      },
+      
+      selectTrack: function(e){
+         this.model.parentView.setSelectedTrack(this.model.track.id);
       },
       
       togglePlay: function(){
          if(!this.model.track.isStreamable()){
             return;
          }
-         var trackId = this.model.track.id;
          
-         var buttonDiv = $(this.el).find('.play-button div');
-         //var soundObj;
-         if(buttonDiv.hasClass('ui-icon-play')){
-            buttonDiv.removeClass('ui-icon-play');
-            buttonDiv.addClass('ui-icon-pause');
-            //need to wrap the view in a closure here
-            (function(cScope){
-               var scope = cScope;
+         if(this.model.track.get("playing")){
+            this.soundObj.pause();
+            this.model.track.set({
+               playing: false
+            })
+         }else{
+            (function(scope){
                SC.whenStreamingReady(function(){
                   if(!scope.soundObj){
-                     scope.soundObj = SC.stream(trackId);
+                     scope.soundObj = SC.stream(scope.model.track.id);
                   }
                   scope.soundObj.play();
+                  scope.model.track.set({
+                     playing: true
+                  })
                });
             })(this);
-         }else{
-            buttonDiv.removeClass('ui-icon-pause');
-            buttonDiv.addClass('ui-icon-play');
-            this.soundObj.pause();
          }
          
+
       },
       
       showTrackOptions: function(){
@@ -195,6 +237,7 @@ $(function(){
       initialize: function(){
          this.el = this.model.el;
          this.delegateEvents(this.events);
+         this.model.track.bind('change', this.render, this);
       },
       
       render: function() {
@@ -202,7 +245,7 @@ $(function(){
          $el = $(this.el);
          $el.html(tmpHtml);
          //jqueryMobile init
-         $el.trigger('create'); //FIXME refactor decoration. //FIXME is it even necessary here>
+         $el.trigger('create'); //FIXME refactor decoration. //FIXME is it even necessary here?
       }
    });
 
@@ -316,21 +359,37 @@ $(function(){
          });
       });
       
-      function getUserDetails(){
+      
+      $("#mainFooter").hide(); //FIXME can be done better
+      
+      var headerDiv = $("#mainHeader");
+            
+      function updateUserData(){
          SC.get("/me", function(me){
-            $("#avatarDiv>img").attr('src', me.avatar_url)
+            var headerTmpl = Handlebars.compile($("#header-template").html());
+            headerDiv.html(headerTmpl(me));
+            headerDiv.trigger('create');
+            headerDiv.show();
+            //$("#avatarDiv>img").attr('src', me.avatar_url)
          });
+      }
+      if(SC.isConnected()){
+         updateUserData();
+      }else{
+         headerDiv.hide();
       }
 
       $("#connectBtn").live('click',function(){
          SC.connect(function(){
+            updateUserData();
             indexView.render();
          });
       });
 
       $("#disconnectBtn").live('click',function(){
          SC.disconnect();
-         indexView.render();
+         //indexView.render();
+         window.location.href='/';
       });
 
 

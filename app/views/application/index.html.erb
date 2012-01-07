@@ -15,29 +15,26 @@
     <%= stylesheet_link_tag 'index' %>
 <% end %>
 
-<a id="connectBtn" class="button scBackground" data-role="button">Connect!</a>
 <div id="mainView">
-
+   
 </div>
-<a id="disconnectBtn" class="button scBackground" data-role="button">Disconnect</a>
+
+<script id="header-template" type="text/x-handlebars-template">
+   <div id="user-data">
+      Hello, {{username}}!
+   <a id="disconnectBtn" class="button scBackground" data-role="button">Disconnect</a>
+</script>
 
 <script id="index-template" type="text/x-handlebars-template">
   {{#if isConnected}}
-    <div id="avatarDiv">
-        <img/>
-    </div>
-
-    <br/>
-
     <div id="menu">
         <ul class="listView" id="playlists-entries" data-role="listview" data-inset="true">
             <li><a href="/playlists">Playlists</a></li>
             <li><a href="#search/">Search</a></li>
         </ul>
     </div>
-
   {{else}}
-    <!-- FIXME -->
+      <a id="connectBtn" class="button scBackground" data-role="button">Connect!</a>
   {{/if}}
 </script>
 
@@ -49,16 +46,31 @@
 </script>
 
 <script id="track-template" type="text/x-handlebars-template">
-    <a class="play-button" data-role="button">
-        {{#if this.streamable}}
-            <div class="ui-icon-play"></div>
-        {{/if}}
-    </a>
-    <a class="track-details" data-role="button">
-        <div class="trackTitle">{{this.title}}</div>
-        <div class="artistName">{{this.user.username}}</div>
+    <a class="track-entry" data-role="button"
+      {{#if this.selected }}
+         data-theme="b"
+      {{/if}}
+    >
+       <div class="play-button">
+           {{#if this.streamable}}
+               {{#if playing}}
+                  <div class="ui-icon-pause"></div>
+               {{else}}
+                  <div class="ui-icon-play"></div>
+               {{/if}}
+           {{/if}}
+       </div>
+       <div class="track-details">
+          <div class="trackTitle">{{this.title}}</div>
+          <div class="artistName">{{this.user.username}}</div>
+       </div>
     </a>
 </script>
 
-
+<script id="searchFooter-template" type="text/x-handlebars-template">
+   <div data-role="footer" class="ui-bar" data-position='fixed'>
+      <a href="index.html" data-role="button" data-icon="gear">Tag</a>
+      <a href="index.html" data-role="button" data-icon="plus">Add to Playlist</a>
+   </div>
+</script>
 

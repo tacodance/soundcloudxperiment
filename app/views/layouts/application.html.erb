@@ -53,8 +53,17 @@
   <%= csrf_meta_tag %>
 </head>
 <body>
-   <div data-role="page" id="mainPage">
-      <%= yield %>
+   <div data-role="page" id="mainPage" data-fullscreen="true">
+      <div id="mainHeader" data-role="header">
+         
+      </div>
+      <div id="mainContent" data-role="content">
+         <%= yield %>
+      </div>
+      <div id="mainFooter" data-role="footer" class="ui-bar" data-position='fixed'>
+         <a href="index.html" data-role="button" data-icon="gear">Tag</a>
+         <a href="index.html" data-role="button" data-icon="plus">Add to Playlist</a>
+      </div>
    </div>
 
    <!-- DIALOGS -->
