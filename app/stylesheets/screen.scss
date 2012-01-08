@@ -27,10 +27,24 @@
 body,.ui-page,#mainView,#searchResults{
    width: 100%;
 }
-
+#mainHeader{
+   >* {
+      display: inline-block;
+   }
+   padding: 5px;
+   
+   .backButton{
+      margin-right: 5px;
+   }
+   
+   #disconnectBtn{
+      float: right;
+      margin-right: 8px;
+   }
+}
 #mainContent{
    position: relative;
-   top: 31px;
+   top: 41px;
 }
 .track-entry{
    text-align: left !important;
@@ -49,6 +63,12 @@ body,.ui-page,#mainView,#searchResults{
       vertical-align: middle;
    }
 }
+
+#mainFooter{
+   position: fixed !important;
+   bottom: 0 !important;
+   top: initial !important;
+}
 .ui-icon-play,.ui-icon-pause {
    background-image: url("/images/player-medium-buttons.png");
    width: 50px;
@@ -59,12 +79,18 @@ body,.ui-page,#mainView,#searchResults{
 
    &.ui-icon-play{
       background-position: -4px -4px;
+      &:hover{
+         opacity: 0.7;
+      }
       &:active{
          background-position: -68px -4px;
       }
    }
    &.ui-icon-pause{
       background-position: -4px -63px;
+      &:hover{
+         opacity: 0.7;
+      }
       &:active{
          background-position: -68px -63px;
       }

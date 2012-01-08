@@ -1,22 +1,53 @@
 // Load the application once the DOM is ready, using `jQuery.ready`:
 $(function(){
    
-   ////////models
-   
+   //----------------MODELS
    //track
    var Track = Backbone.Model.extend({
-     // Default attributes for a todo item.
+    //localStorage: new Store("tracks"),
+     addTag: function(tag){
+        if(!_.include(this.get('tags'), tag)){
+           var arr = this.get('tags');
+           arr.push(tag);
+           this.set({tags: arr})
+        }
+        this.trigger('tagsChanged');
+     },
+     removeTag: function(tag){
+        if(_.include(this.get('tags'), tag)){
+           this.set({
+              tags: _.without(this.get('tags'), tag)
+           });
+        }
+        this.trigger('tagsChanged');
+     },
+     initialize: function(){
+        if(!this.get('tags')){
+           var libTrack = trackLibrary.get(this.get('id'));
+           var initTags = [];
+           if(libTrack){
+              initTags = libTrack.get('tags');
+           }
+           this.set({
+              tags: initTags
+           })
+           // if(!this.get('tags')){
+           //    this.set({
+           //       tags: []
+           //    }); //FIXME read/parse from metadata  
+           // }           
+        }
+        this.bind('tagsChanged', this.syncTrack, this);
+     },
+     syncTrack: function(){
+        window.trackLibrary.syncTrack(this);
+     },
      defaults: function() {
        return {};
-     },
-     
-     isStreamable: function(){
-        return this.attributes.streamable;
      }
    });
    
    var TrackCollection = Backbone.Collection.extend({
-      // Reference to this collection's model.
       model: Track,
 
       nextOrder: function() {
@@ -24,12 +55,52 @@ $(function(){
          return this.last().get('order') + 1;
       },
 
-      // Todos are sorted by their original insertion order.
       comparator: function(todo) {
          return todo.get('order');
       }
    });
 
+   var TrackLibrary = Backbone.Collection.extend({
+     model: Track,
+     localStorage: new Store("trackLibrary"),
+     
+     syncTrack: function(track){
+        var libTrack = this.get(track.get('id'));
+        if(libTrack){
+           libTrack.set(track);
+           libTrack.save();
+        }else{
+           this.create(track.toJSON());
+        }
+     }
+   });
+   
+   var Playlist = Backbone.Model.extend({
+     
+     addTrack: function(track){
+        var tracks = this.get('tracks');
+        if(!tracks.get(track.get('id'))){ //track not already there... no duplicates!
+           tracks.add(track);
+        }
+     },
+     
+     initialize: function(obj){
+        this.set(obj);
+        this.set({
+           tracks: new TrackCollection
+        });
+     }
+   });
+
+   var PlaylistLibrary = Backbone.Collection.extend({
+     model: Playlist,
+     localStorage: new Store("playlistLibrary")
+   });
+      
+   window.trackLibrary = new TrackLibrary;
+   window.playlistLibrary = new PlaylistLibrary;
+
+   //--------------VIEWS
    //1-Appview
    var AppView = Backbone.View.extend({
       el: $("#mainView"),
@@ -55,8 +126,10 @@ $(function(){
       el: $("#mainView"),
       template: Handlebars.compile($("#search-template").html()),
       footerTemplate: Handlebars.compile($("#searchFooter-template").html()),
-      footerDiv: $("#mainFooter"),
-      rendered: false,
+      footerView: null,
+      footerDiv: $("#mainFooter"), //FIXME remove this
+      query: null,
+      resTracksView: null,
       
       events: {
          //"keypress #searchInput"    : "searchTracks",
@@ -66,6 +139,10 @@ $(function(){
       launchSearch: function(e){
          var query = e.currentTarget.value;
          appRouter.navigate('search/'+query, true);
+      },
+      
+      getSelectedTrack: function(){
+         return this.resTracksView.getSelectedTrack();
       },
       
       searchTracks: function(query){
@@ -84,29 +161,36 @@ $(function(){
                success:function(res, status, xhr){
                   var resTracks = new TrackCollection; //in the closure scope
                   resTracks.add(res);
-                  var resTracksView = new SearchResultsView({
+                  searchView.resTracksView = new SearchResultsView({
                      model: resTracks
                   });
-                  resTracksView.render();
+                  searchView.resTracksView.render();
                   
-                  resTracks.bind('change', searchView.refreshFooter, searchView);
+                  if(!this.footerView){
+                     var footerView = new SearchFooterView({
+                        model: resTracks
+                     });
+                  }
+                  
+                  searchView.query = query;
+                  
+                  //resTracks.bind('change', searchView.refreshFooter, searchView);
                }
             })
          //}
                   
       },
-
-      //FIXME remove this
-      wasRendered: function(){
-         return this.rendered;
-      },
-
+      
       render: function() {
          var tmpHtml     = this.template();
          $el = $(this.el);
          $el.html(tmpHtml);
          //jqueryMobile init
          $el.trigger('create'); //FIXME refactor decoration
+         if(this.query){ //TODO check
+            this.resTracksView.render();
+         }
+         
       },
 
       initialize: function(){
@@ -122,19 +206,24 @@ $(function(){
    });
    
    var searchView = new SearchView;
+   window.sv = searchView;// FIXMe debug only
    
    //2.1-SearchResultsView
    var SearchResultsView = Backbone.View.extend({
-      el: null, //must be set at init time
+      //el: null, //must be set dynamically
       trackViews: {}, // {trackid: trackview, ...
       
       initialize: function(){
-         this.el = $("#searchResults");
+         //this.el = $("#searchResults");
       },
       
       refreshTrackView: function(trackId){
          var track = this.model.get(trackId);
          
+      },
+      
+      getSelectedTrack: function(){
+         return this.model.selectedTrack;
       },
       
       setSelectedTrack: function(trackId){
@@ -148,13 +237,12 @@ $(function(){
          selectedTrack.set({
             selected: true
          });
-         
-         
-         // this.render();
+         selectedTrack.trigger('selected',selectedTrack);
       },
       
       render: function() {
-         var $el = $(this.el);
+         //var $el = $(this.el);
+         var $el = $("#searchResults");
          $el.html(''); //empty results
          
          //add single TrackViews
@@ -176,7 +264,6 @@ $(function(){
             })
          })(this);
          $el.trigger('create'); //jqueryMobile init
-         this.wasRendered = true;
       }
    });
 
@@ -190,7 +277,6 @@ $(function(){
          "click .ui-icon-play"  : 'togglePlay',
          "click .ui-icon-pause" : 'togglePlay',
          "click .track-entry"                : 'selectTrack',
-         //"click .track-details" : 'showTrackOptions'
       },
       
       selectTrack: function(e){
@@ -198,7 +284,7 @@ $(function(){
       },
       
       togglePlay: function(){
-         if(!this.model.track.isStreamable()){
+         if(!this.model.track.get('streamable')){
             return;
          }
          
@@ -224,16 +310,6 @@ $(function(){
 
       },
       
-      showTrackOptions: function(){
-         //$.mobile.changePage($('#trackOptionsDialog'), 'pop', true, true);
-         $.mobile.changePage($('#trackOptionsDialog'),{
-            role: 'dialog',
-            changeHash: false,
-            allowSamePageTransition: true
-//            pageContainer: $('#mainView')
-         });
-      },
-      
       initialize: function(){
          this.el = this.model.el;
          this.delegateEvents(this.events);
@@ -248,81 +324,173 @@ $(function(){
          $el.trigger('create'); //FIXME refactor decoration. //FIXME is it even necessary here?
       }
    });
-
-
-
-
-
-
-
-
-
-   // The DOM element for a todo item...
-   window.PlaylistView = Backbone.View.extend({
-
-      //... is a list tag.
-      tagName:  "li",
-
-      // Cache the template function for a single item.
-      template: Handlebars.compile($('#track-template').html()),
-
-      // The DOM events specific to an item.
-
-      // The TodoView listens for changes to its model, re-rendering.
-      initialize: function() {
-         $el = $(this.el);
-         
-         $el.attr({
-            class: "track-li",
-            'data-role': "controlgroup",
-            'data-type': "horizontal"
-         });
-         // this.model.bind('change', this.render, this);
-         // this.model.bind('destroy', this.remove, this);
+   
+   //3-SearchFooter
+   var SearchFooterView = Backbone.View.extend({
+      el: $("#mainFooter"),
+      template: Handlebars.compile($("#searchFooter-template").html()),
+      
+      events:{
+         "click #addTrack" : "addTrack",
+         "click #tagTrack" : "tagTrack"
       },
       
-      // Re-render the contents of the todo item.
+      addTrack: function(e){
+         var selTrack = searchView.getSelectedTrack();
+         this.addToPlaylistView = new AddToPlaylistView({ //FIXME could be singleton
+            model: playlistLibrary
+         });
+         this.addToPlaylistView.render();
+         this.addToPlaylistView.trigger('create');
+         $.mobile.changePage($('#addToPlaylistDialog'),{
+            role: 'dialog',
+            changeHash: false,
+            allowSamePageTransition: true
+         });
+      },
+      
+      tagTrack: function(e){
+         var selTrack = searchView.getSelectedTrack();
+         this.trackTagsView = new TrackTagsView({
+            model: {
+               track: trackLibrary.get(selTrack.get('id')) || selTrack
+            }
+         });
+         this.trackTagsView.render();
+         this.trackTagsView.trigger('create');
+         $.mobile.changePage($('#trackTagsDialog'),{
+            role: 'dialog',
+            changeHash: false,
+            allowSamePageTransition: true
+         });
+      },
+      
+      initialize: function(){
+         this.model.bind('selected', this.refresh, this);
+         this.render();
+         $(this.el).hide();
+      },
+      
+      //TODO could be done better?
+      refresh: function(track,b,c){
+         if(track.get('selected')){
+            $(this.el).show();
+         }
+      },
+      
       render: function() {
-         $(this.el).html(this.template(this.model.toJSON()));
-         //this.setText(); ??
-         return this;
-      },
-
-      // To avoid XSS (not that it would be harmful in this particular app),
-      // we use `jQuery.text` to set the contents of the todo item.
-      setText: function() {
-         var text = this.model.get('text');
-         this.$('.todo-text').text(text);
-         this.input = this.$('.todo-input');
-         this.input.bind('blur', _.bind(this.close, this)).val(text);
-      },
-
-      // Close the `"editing"` mode, saving changes to the todo.
-      close: function() {
-         this.model.save({text: this.input.val()});
-         $(this.el).removeClass("editing");
-      },
-
-      // If you hit `enter`, we're through editing the item.
-      updateOnEnter: function(e) {
-         if (e.keyCode == 13) this.close();
-      },
-
-      // Remove this view from the DOM.
-      remove: function() {
-         $(this.el).remove();
-      },
-
-      // Remove the item, destroy the model.
-      clear: function() {
-         this.model.destroy();
+         var tmpHtml     = this.template();
+         $el = $(this.el);
+         $el.html(tmpHtml);
+         $el.trigger('create');
       }
-
    });
+   
+   //4----trackTags
+   var TrackTagsView = Backbone.View.extend({
+      el: $("#trackTagsDiv"),
+      template: Handlebars.compile($("#trackTags-template").html()),
+      
+      events:{
+         "keypress #newTag" : "addTag",
+         "click .tagEntry" : "removeTag"
+      },
+      
+      addTag: function(e){
+         if(e.keyCode==13){
+            this.model.track.addTag(e.currentTarget.value);
+         }
+      },
+      
+      removeTag:function(e){
+         var tag = $(e.currentTarget).data("tag");
+         this.model.track.removeTag(tag);
+      },
+      
+      initialize: function(){
+         this.model.track.bind('tagsChanged', this.render, this);
+         // this.render();
+         // $(this.el).hide();
+         
+      },
+            
+      render: function() {
+         //var selTrack = searchView.getSelectedTrack(); //FIXME should be done better
+         var selTrack = this.model.track;
+         var libTrack = trackLibrary.get(selTrack.get('id')) || selTrack;
+         
+         var tmpHtml     = this.template({
+            tags: libTrack.get('tags'),
+            track: libTrack.toJSON()
+         }); //TODO use model
+         $el = $(this.el);
+         $el.html(tmpHtml);
+         setTimeout(function(){
+            $el.trigger('create');            
+         });
+
+      }
+   });
+   
+   //5---------addToPlaylist
+   var AddToPlaylistView = Backbone.View.extend({
+      el: $("#addToPlaylistDiv"),
+      template: Handlebars.compile($("#addToPlaylist-template").html()),
+      
+      events:{
+         "keypress #newPlaylist" : "addPlaylist",
+         "click .playlistEntry" : "addToPlaylist"
+      },
+      
+      addPlaylist: function(e){
+         if(e.keyCode==13){
+            var title = e.currentTarget.value;
+            var playlist = playlistLibrary.get({title: title});
+            if(!playlist){
+               playlistLibrary.create({
+                  title: title
+               })
+               playlistLibrary.trigger('change');
+            }
+         }
+      },
+      
+      addToPlaylist: function(e){
+         var plId = $(e.currentTarget).data("playlist");
+         var playlist = playlistLibrary.get(plId);
+         var track = searchView.getSelectedTrack();
+         playlist.addTrack(track);
+      },
+
+      initialize: function(){
+         playlistLibrary.bind('change', this.render, this);
+      },
+            
+      render: function() {      
+         var modelJSON = this.model.toJSON();
+         var playlists   =  _.map(modelJSON, function(pl){ 
+            return {
+               id: pl.id,
+               title: pl.title
+            }
+         });
+         var tmpHtml     = this.template({
+            playlists: playlists
+         });
+         $el = $(this.el);
+         $el.html(tmpHtml);
+         setTimeout(function(){
+            $el.trigger('create');            
+         });
+
+      }
+   });
+   
 
 
 
-   //router
+
+   //-------------ROUTER
    var soundRouter = Backbone.Router.extend({
       routes: {
          "":                 "index",    // #index
@@ -335,10 +503,11 @@ $(function(){
       },
 
       search: function(query, page) {
-         if(!searchView.wasRendered()){
+         //if(!searchView.wasRendered()){
+         // if(!searchView.query){
             searchView.render();
-         }
-         if(query){
+         // }
+         if(query!=searchView.query){
             searchView.searchTracks(query);
          }
       }
@@ -348,11 +517,13 @@ $(function(){
    Backbone.history.start();
 
 
+
+   //-------------INIT
    $(document).ready(function(){
       //FIXME fix this
       $(document).delegate(".ui-dialog .ui-header>a", "click", function() {
          $.mobile.changePage($('#mainPage'),{
-            role: 'dialog',
+            // role: 'dialog',
             changeHash: false,
             allowSamePageTransition: true,
             transition: 'none'
@@ -361,6 +532,9 @@ $(function(){
       
       
       $("#mainFooter").hide(); //FIXME can be done better
+      
+      trackLibrary.fetch(); //get data from localStorage
+      playlistLibrary.fetch(); //get data from localStorage
       
       var headerDiv = $("#mainHeader");
             
@@ -378,21 +552,19 @@ $(function(){
       }else{
          headerDiv.hide();
       }
-
+      
+      //FIXME handle these better?
       $("#connectBtn").live('click',function(){
          SC.connect(function(){
             updateUserData();
             indexView.render();
          });
       });
-
       $("#disconnectBtn").live('click',function(){
          SC.disconnect();
          //indexView.render();
          window.location.href='/';
       });
-
-
       $(".ui-icon-play").live('mousedown', function(evt){
          //evt.preventDefault();
          evt.stopPropagation();

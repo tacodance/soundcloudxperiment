@@ -20,8 +20,10 @@
 </div>
 
 <script id="header-template" type="text/x-handlebars-template">
+   <a class="backButton" data-role="button" data-icon="home">Menu</a>
    <div id="user-data">
       Hello, {{username}}!
+   </div>
    <a id="disconnectBtn" class="button scBackground" data-role="button">Disconnect</a>
 </script>
 
@@ -39,7 +41,7 @@
 </script>
 
 <script id="search-template" type="text/x-handlebars-template">
-    <input type="search" name="password" id="searchInput" value="" />
+    <input type="search" id="searchInput" value="" />
     <br/>
     <ul id="searchResults">
     </ul>
@@ -69,8 +71,22 @@
 
 <script id="searchFooter-template" type="text/x-handlebars-template">
    <div data-role="footer" class="ui-bar" data-position='fixed'>
-      <a href="index.html" data-role="button" data-icon="gear">Tag</a>
-      <a href="index.html" data-role="button" data-icon="plus">Add to Playlist</a>
+      <a id="tagTrack" data-role="button" data-icon="gear">Tag</a>
+      <a id="addTrack" data-role="button" data-icon="plus">Add to Playlist</a>
    </div>
+</script>
+
+<script id="trackTags-template" type="text/x-handlebars-template">
+   <input placeholder="New tag..." id="newTag" value="" />
+      {{#each tags}}
+         <a class="tagEntry" data-tag="{{this}}" data-role="button" data-icon="delete" data-iconpos="right">{{this}}</a>
+      {{/each}}
+</script>
+
+<script id="addToPlaylist-template" type="text/x-handlebars-template">
+   <input placeholder="New playlist..." id="newPlaylist" value="" />
+      {{#each playlists}}
+         <a class="playlistEntry" data-playlist="{{this.id}}" data-role="button" >{{this.title}}</a>
+      {{/each}}
 </script>
 
