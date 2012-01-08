@@ -20,21 +20,21 @@
 </div>
 
 <script id="header-template" type="text/x-handlebars-template">
-   <a class="backButton" data-role="button" data-icon="home">Menu</a>
-   <div id="user-data">
-      Hello, {{username}}!
-   </div>
+   <a id="menuButton" data-role="button" data-icon="home">Menu</a>
    <a id="disconnectBtn" class="button scBackground" data-role="button">Disconnect</a>
 </script>
 
 <script id="index-template" type="text/x-handlebars-template">
   {{#if isConnected}}
-    <div id="menu">
+     <div id="user-data">
+         
+     </div>
+     <div id="menu">
         <ul class="listView" id="playlists-entries" data-role="listview" data-inset="true">
-            <li><a href="/playlists">Playlists</a></li>
-            <li><a href="#search/">Search</a></li>
+           <li><a href="#playlists/">Playlists</a></li>
+           <li><a href="#search/">Search</a></li>
         </ul>
-    </div>
+     </div>
   {{else}}
       <a id="connectBtn" class="button scBackground" data-role="button">Connect!</a>
   {{/if}}
@@ -90,3 +90,17 @@
       {{/each}}
 </script>
 
+<!-- TODO these two views are refactorable.. -->
+<script id="playlists-template" type="text/x-handlebars-template">
+   <h1>Playlists</h1>
+   <input placeholder="New playlist..." id="newPlaylist" value="" />
+      {{#each playlists}}
+         <a class="playlistEntry" data-playlist="{{this.id}}" data-role="button" >{{this.title}}</a>
+      {{/each}}   
+</script>
+
+<script id="playlist-template" type="text/x-handlebars-template">
+      <h1>PlaylistTitle</h1>
+      <div id="playlistTracks">
+      </div>
+</script>
