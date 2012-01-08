@@ -549,7 +549,8 @@ $(function(){
       Backbone.history.start(); //starts the router
       
       var headerDiv = $("#mainHeader");
-      if(SC.isConnected()){
+      
+      function initView(){
          var headerTmpl = Handlebars.compile($("#header-template").html());
          headerDiv.html(headerTmpl());
          headerDiv.trigger('create');
@@ -561,11 +562,14 @@ $(function(){
          $("#menuButton").live('click',function(){
             appRouter.navigate('',true);
          });
+      }
+      if(SC.isConnected()){
+         initView();
       }else{
          headerDiv.hide();
          $("#connectBtn").live('click',function(){
             SC.connect(function(){
-               updateUserData();
+               initView();
                menuView.render();
             });
          });
