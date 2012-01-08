@@ -112,7 +112,7 @@ $(function(){
       template: Handlebars.compile($("#menu-template").html()),
       
       render: function() {
-         var tmpHtml     = this.template({
+         var tmpHtml = this.template({
             isConnected: SC.isConnected()
          });
          $el = $(this.el);
@@ -140,7 +140,7 @@ $(function(){
       launchSearch: function(e){
          var query = e.currentTarget.value;
          appRouter.navigate('search/'+query, true);
-      },      
+      },
       getSelectedTrack: function(){
          return this.selectedTrack;
       },
@@ -176,7 +176,7 @@ $(function(){
                   searchView.resTracksView.render(); 
                   searchView.query = query;
                }
-            })                  
+            })
       },
       
       render: function() {
@@ -188,7 +188,7 @@ $(function(){
             this.resTracksView.render();
          }
       }
-   });   
+   });
    var searchView = new SearchView;
    
    //2.1-SearchResultsView: A collection of search results
@@ -235,7 +235,7 @@ $(function(){
       togglePlay: function(){
          if(!this.model.track.get('streamable')){
             return;
-         }         
+         }
          if(this.model.track.get("playing")){
             this.soundObj.pause();
             this.model.track.set({
@@ -354,12 +354,11 @@ $(function(){
       initialize: function(){
          this.model.track.bind('tagsChanged', this.render, this);
       },
-            
       render: function() {
          var selTrack = this.model.track;
          var libTrack = trackLibrary.get(selTrack.get('id')) || selTrack;
          
-         var tmpHtml     = this.template({
+         var tmpHtml = this.template({
             tags: libTrack.get('tags'),
             track: libTrack.toJSON()
          });
@@ -400,8 +399,8 @@ $(function(){
       },
       initialize: function(){
          playlistLibrary.bind('change', this.render, this);
-      },    
-      render: function() {      
+      },
+      render: function() {
          var modelJSON = this.model.toJSON();
          var playlists = _.map(modelJSON, function(pl){ 
             return {
@@ -409,7 +408,7 @@ $(function(){
                title: pl.title
             }
          });
-         var tmpHtml     = this.template({
+         var tmpHtml = this.template({
             playlists: playlists
          });
          $el = $(this.el);
@@ -466,16 +465,16 @@ $(function(){
       el: $("#mainView"),
       template: Handlebars.compile($("#playlist-template").html()),
       trackViews: {}, // maps track ID's to TrackView's
-            
+      
       render: function() {
          //1-container
-         var tmpHtml = this.template();         
+         var tmpHtml = this.template();
          $el = $(this.el);
          $el.html(tmpHtml);
          
          //2-add single TrackViews
          var $plTracks = $("#playlistTracks");
-         $plTracks.html(''); //empty         
+         $plTracks.html(''); //empty
          (function(scope){
             var tracks = scope.model.get('tracks');
             _.each(tracks, function(trackId){
@@ -490,7 +489,7 @@ $(function(){
                   }
                });
                scope.trackViews[track.attributes.id] = trackView;
-               trackView.render();               
+               trackView.render();
             });
          })(this);
       }
@@ -508,13 +507,15 @@ $(function(){
 
       menu: function() {
          menuView.render();
+         $("#pageTitle").text("");
       },
       search: function(query, page) {
          searchView.render();
          if(query!=searchView.query){
             searchView.searchTracks(query);
          }
-      },      
+         $("#pageTitle").text("Search");
+      },
       playlists: function(id){
          if(id){
             playlistView =  new PlaylistView({
@@ -524,6 +525,7 @@ $(function(){
          }else{
             playlistsView.render();
          }
+         $("#pageTitle").text("Playlists");
       }
    });
    appRouter = new soundRouter;
@@ -531,14 +533,15 @@ $(function(){
 
    //-----PAGE INIT
    $(document).ready(function(){
-      //FIXME fix this
+      //navigate to main page when closing dialog.
+      //kind of a hack as jQuery mobile doesn't play nice with jquery routes
       $(document).delegate(".ui-dialog .ui-header>a", "click", function() {
          $.mobile.changePage($('#mainPage'),{
             changeHash: false,
             allowSamePageTransition: true,
             transition: 'none'
          });
-      });      
+      });
       
       trackLibrary.fetch(); //get data from localStorage
       playlistLibrary.fetch(); //get data from localStorage
@@ -546,36 +549,26 @@ $(function(){
       Backbone.history.start(); //starts the router
       
       var headerDiv = $("#mainHeader");
-      //FIXME fix this
-      function updateUserData(){
-         SC.get("/me", function(me){
-            var headerTmpl = Handlebars.compile($("#header-template").html());
-            headerDiv.html(headerTmpl());
-            $("#user-data").html("Hello, "+me.username+"!"); //TODO can use template
-            headerDiv.trigger('create');
-            headerDiv.show();
-            //$("#avatarDiv>img").attr('src', me.avatar_url)
-         });
-      }
       if(SC.isConnected()){
-         updateUserData();
+         var headerTmpl = Handlebars.compile($("#header-template").html());
+         headerDiv.html(headerTmpl());
+         headerDiv.trigger('create');
+         headerDiv.show();
+         $("#disconnectBtn").live('click',function(){
+            SC.disconnect();
+            window.location.href='/';
+         });
+         $("#menuButton").live('click',function(){
+            appRouter.navigate('',true);
+         });
       }else{
          headerDiv.hide();
-      }
-      
-      //FIXME handle these better?
-      $("#connectBtn").live('click',function(){
-         SC.connect(function(){
-            updateUserData();
-            menuView.render();
+         $("#connectBtn").live('click',function(){
+            SC.connect(function(){
+               updateUserData();
+               menuView.render();
+            });
          });
-      });
-      $("#disconnectBtn").live('click',function(){
-         SC.disconnect();
-         window.location.href='/';
-      });
-      $("#menuButton").live('click',function(){
-         appRouter.navigate('',true);
-      });
+      }
    })
 });

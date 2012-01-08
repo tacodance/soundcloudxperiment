@@ -2,17 +2,11 @@
     c_id = 'cd521b6a922f4f24f8a6214259923770'
     r_uri = 'http://127.0.0.1/authenticate/callback'
     #r_uri = 'http://127.0.0.1/'
-    
-    btn_url="https://soundcloud.com/connect?client_id=#{c_id}&redirect_uri=#{r_uri}&response_type=code_and_token&scope=non-expiring&display=popup'" 
    
     #soundcloudxperiment.herokuapp.com
 %>
 <% content_for :extra_js do %>    
     <%= javascript_include_tag 'index' %>
-<% end %>
-
-<% content_for :css do %>
-    <%= stylesheet_link_tag 'index' %>
 <% end %>
 
 <div id="mainView">
@@ -21,6 +15,7 @@
 
 <script id="header-template" type="text/x-handlebars-template">
    <a id="menuButton" data-role="button" data-icon="home">Menu</a>
+   <div id="pageTitle"></div>
    <a id="disconnectBtn" class="button scBackground" data-role="button">Disconnect</a>
 </script>
 
@@ -92,11 +87,10 @@
 
 <!-- TODO these two views are refactorable.. -->
 <script id="playlists-template" type="text/x-handlebars-template">
-   <h1>Playlists</h1>
    <input placeholder="New playlist..." id="newPlaylist" value="" />
-      {{#each playlists}}
-         <a class="playlistEntry" data-playlist="{{this.id}}" data-role="button" >{{this.title}}</a>
-      {{/each}}   
+   {{#each playlists}}
+      <a class="playlistEntry" data-playlist="{{this.id}}" data-role="button" >{{this.title}}</a>
+   {{/each}}   
 </script>
 
 <script id="playlist-template" type="text/x-handlebars-template">

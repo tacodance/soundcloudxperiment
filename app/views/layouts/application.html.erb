@@ -15,22 +15,19 @@
   <link rel="stylesheet" href="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css" />
   <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
   <script type="text/javascript" src="http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js"></script>
-  <script>
-      //$(document).bind("mobileinit", function(){
-          $.extend(  $.mobile , {
-              ajaxEnabled: false,
-              linkBindingEnabled: false,
-              hashListeningEnabled: false,
-              pushStateEnabled: false
-          });
-      //});
+  <script type="text/javascript">
+       //keep jQuery mobile from interfering with Backbone router
+       $.extend(  $.mobile , {
+           ajaxEnabled: false,
+           linkBindingEnabled: false,
+           hashListeningEnabled: false,
+           pushStateEnabled: false
+       });
   </script>
   
   <%
       c_id = 'cd521b6a922f4f24f8a6214259923770'
-      r_uri = 'http://127.0.0.1/authenticate/callback'
-      #r_uri = 'http://127.0.0.1/'
-      #soundcloudxperiment.herokuapp.com
+      r_uri = 'http://soundcloudxperiment.herokuapp.com/callback.html'
   %>
   
   <%#= javascript_include_tag 'jquery.min' %>  
@@ -53,6 +50,8 @@
   <%= csrf_meta_tag %>
 </head>
 <body>
+
+   <!-- Main Page  -->
    <div data-role="page" id="mainPage" data-fullscreen="true">
       <div id="mainHeader" data-role="header">
          
@@ -67,20 +66,7 @@
    </div>
 
    <!-- DIALOGS -->
-   <!-- 1-track options -->
-   <div data-role="page" id="trackOptionsDialog">
-      <div data-role="header">
-         HEY!
-      </div>
-      <div data-role="content">
-         <ul class="listView" data-role="listview" data-inset="true">
-            <li><a href="#">Herp</a></li>
-            <li><a href="#">Derp</a></li>
-         </ul>
-      </div>
-   </div>
-
-   <!--2-tags -->
+   <!--1-tags -->
    <div data-role="page" id="trackTagsDialog">
       <div data-role="header">
          <h1 class="ui-title" tabindex="0" role="heading" aria-level="1">Add or remove track tags</h1>
@@ -89,7 +75,7 @@
       </div>
    </div>
 
-   <!--3-add to playlist -->
+   <!--2-add to playlist -->
    <div data-role="page" id="addToPlaylistDialog">
       <div data-role="header">
          <h1 class="ui-title" tabindex="0" role="heading" aria-level="1">Add to playlist</h1>
