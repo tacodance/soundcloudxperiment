@@ -426,12 +426,29 @@ $(function(){
       footerTemplate: Handlebars.compile($("#searchFooter-template").html()),
       footerView: null, //unused ATM
       events: {
-         "click .playlistEntry"    : "showPlaylist"
+         "keypress #newPlaylist" : "addPlaylist",
+         "click .playlistEntry"  : "showPlaylist"
+      },
+      
+      addPlaylist: function(e){
+         if(e.keyCode==13){
+            var title = e.currentTarget.value;
+            var playlist = playlistLibrary.getByTitle(title);
+            if(!playlist){
+               playlistLibrary.create({
+                  title: title
+               })
+               playlistLibrary.trigger('change');
+            }
+         }
       },
       
       showPlaylist: function(e){
          var plId = $(e.currentTarget).data("playlist");
          appRouter.navigate('playlists/'+plId, true);
+      },
+      initialize: function(){
+         playlistLibrary.bind('change', this.render, this);
       },
       render: function() {
          var modelJSON = this.model.toJSON();
@@ -468,7 +485,7 @@ $(function(){
       
       render: function() {
          //1-container
-         var tmpHtml = this.template();
+         var tmpHtml = this.template(this.model.toJSON());
          $el = $(this.el);
          $el.html(tmpHtml);
          

@@ -45,6 +45,11 @@ body,.ui-page,#mainView,#searchResults{
 #mainContent{
    position: relative;
    top: 41px;
+   #mainView{
+      h1{
+         margin: 5px;
+      }
+   }
 }
 .track-entry{
    text-align: left !important;
